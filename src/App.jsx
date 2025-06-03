@@ -32,7 +32,7 @@ const TranscriptionApp = () => {
   
   // Estados de transcrição
   const [isRecording, setIsRecording] = useState(false);
-  const [transcriptionMode, setTranscriptionMode] = useState('auto'); // 'auto' ou 'manual'
+  const [transcriptionMode, setTranscriptionMode] = useState('auto');
   const [transcribedText, setTranscribedText] = useState('');
   const [summary, setSummary] = useState('');
   const [audioFiles, setAudioFiles] = useState([
@@ -68,6 +68,42 @@ const TranscriptionApp = () => {
   // Refs
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
+
+  const getAudioDuration = async (file) => {
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      audio.src = URL.createObjectURL(file);
+      audio.onloadedmetadata = () => {
+        URL.revokeObjectURL(audio.src);
+        const minutes = Math.floor(audio.duration / 60);
+        const seconds = Math.floor(audio.duration % 60);
+        resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      };
+    });
+  };
+
+  const handleFileUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    
+    const newAudioFiles = await Promise.all(files.map(async (file, index) => {
+      const duration = await getAudioDuration(file);
+      return {
+        id: Date.now() + index,
+        name: file.name,
+        duration: duration,
+        status: 'pendente',
+        project: selectedProject,
+        file: file
+      };
+    }));
+    
+    setAudioFiles(prevFiles => [...prevFiles, ...newAudioFiles]);
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   // Simulação de transcrição em tempo real
   const startRecording = async () => {
@@ -118,20 +154,6 @@ const TranscriptionApp = () => {
     setTimeout(() => {
       setSummary('Resumo: Conversa de atendimento ao cliente sobre questões de produto. Cliente expressou preocupações que foram abordadas pela equipe de suporte. Resolução positiva alcançada.');
     }, 1000);
-  };
-
-  const handleFileUpload = (event) => {
-    const files = Array.from(event.target.files);
-    const newAudioFiles = files.map((file, index) => ({
-      id: audioFiles.length + index + 1,
-      name: file.name,
-      duration: '0:00',
-      status: 'pendente',
-      project: selectedProject,
-      file: file
-    }));
-    
-    setAudioFiles([...audioFiles, ...newAudioFiles]);
   };
 
   const auditWithChatGPT = () => {
