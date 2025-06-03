@@ -240,6 +240,14 @@ const TranscriptionApp = () => {
             <Upload size={20} />
             <span>Carregar Áudio</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('files')}
+            className="flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
+          >
+            <FileText size={20} />
+            <span>Ficheiros</span>
+          </button>
           
           <input
             ref={fileInputRef}
